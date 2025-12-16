@@ -120,37 +120,14 @@ const CreateEvent = () => {
       setAiLoading(false);
     }
   };
-              Description *
-              <span style={{ float: 'right', fontSize: '0.875rem' }}>
-                <button
-                  type="button"
-                  onClick={handleAIGenerate}
-                  disabled={aiLoading || !formData.title}
-                  className="btn-link"
-                  style={{ marginRight: '1rem' }}
-                >
-                  {aiLoading ? '⏳ Generating...' : '✨ AI Generate'}
-                </button>
-                {formData.description && (
-                  <button
-                    type="button"
-                    onClick={handleAIEnhance}
-                    disabled={aiLoading}
-                    className="btn-link"
-                  >
-                    {aiLoading ? '⏳ Enhancing...' : '🚀 AI Enhance'}
-                  </button>
-                )}
-              </span>
-            </label>
-            <textarea
-              name="description"
-              className="form-control"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              maxLength="1000"
-              placeholder="Describe your event... or use AI to generatele);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('date', formData.date);
       formDataToSend.append('time', formData.time);
@@ -199,7 +176,30 @@ const CreateEvent = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Description *</label>
+            <label className="form-label">
+              Description *
+              <span style={{ float: 'right', fontSize: '0.875rem' }}>
+                <button
+                  type="button"
+                  onClick={handleAIGenerate}
+                  disabled={aiLoading || !formData.title}
+                  className="btn-link"
+                  style={{ marginRight: '1rem' }}
+                >
+                  {aiLoading ? '⏳ Generating...' : '✨ AI Generate'}
+                </button>
+                {formData.description && (
+                  <button
+                    type="button"
+                    onClick={handleAIEnhance}
+                    disabled={aiLoading}
+                    className="btn-link"
+                  >
+                    {aiLoading ? '⏳ Enhancing...' : '🚀 AI Enhance'}
+                  </button>
+                )}
+              </span>
+            </label>
             <textarea
               name="description"
               className="form-control"
@@ -207,7 +207,7 @@ const CreateEvent = () => {
               onChange={handleChange}
               required
               maxLength="1000"
-              placeholder="Describe your event..."
+              placeholder="Describe your event... or use AI to generate"
               rows="5"
             />
           </div>

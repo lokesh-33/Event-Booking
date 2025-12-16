@@ -17,6 +17,7 @@ const EditEvent = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [currentImage, setCurrentImage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const navigate = useNavigate();
   const { id } = useParams();
@@ -72,6 +73,63 @@ const EditEvent = () => {
       }
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    if (!formData.title || !formData.location || !formData.date) {
+      toast.warning('Please fill in Title, Location, and Date first');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await api.post('/api/ai/generate-description', {
+        title: formData.title,
+        location: formData.location,
+        date: formData.date,
+        time: formData.time,
+        capacity: formData.capacity
+      });
+
+      if (response.data.success) {
+        setFormData({ ...formData, description: response.data.description });
+        toast.success('✨ AI generated description!');
+      } else {
+        toast.info('AI service not available. Please write manually.');
+      }
+    } catch (error) {
+      toast.info('AI service not available. Please write manually.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAIEnhance = async () => {
+    if (!formData.description) {
+      toast.warning('Please write a description first');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await api.post('/api/ai/enhance-description', {
+        description: formData.description,
+        title: formData.title,
+        location: formData.location,
+        date: formData.date
+      });
+
+      if (response.data.success) {
+        setFormData({ ...formData, description: response.data.description });
+        toast.success('✨ AI enhanced description!');
+      } else {
+        toast.info('AI service not available');
+      }
+    } catch (error) {
+      toast.info('AI service not available');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -145,7 +203,30 @@ const EditEvent = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Description *</label>
+            <label className="form-label">
+              Description *
+              <span style={{ float: 'right', fontSize: '0.875rem' }}>
+                <button
+                  type="button"
+                  onClick={handleAIGenerate}
+                  disabled={aiLoading || !formData.title}
+                  className="btn-link"
+                  style={{ marginRight: '1rem' }}
+                >
+                  {aiLoading ? '⏳ Generating...' : '✨ AI Generate'}
+                </button>
+                {formData.description && (
+                  <button
+                    type="button"
+                    onClick={handleAIEnhance}
+                    disabled={aiLoading}
+                    className="btn-link"
+                  >
+                    {aiLoading ? '⏳ Enhancing...' : '🚀 AI Enhance'}
+                  </button>
+                )}
+              </span>
+            </label>
             <textarea
               name="description"
               className="form-control"
@@ -153,6 +234,7 @@ const EditEvent = () => {
               onChange={handleChange}
               required
               maxLength="1000"
+              placeholder="Describe your event... or use AI to generate"
               rows="5"
             />
           </div>
