@@ -1,10 +1,14 @@
-const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// AI service for generating/enhancing event descriptions
+// AI service for generating/enhancing event descriptions using Google Gemini
 class AIService {
   constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY || '';
+    this.apiKey = process.env.GEMINI_API_KEY || '';
     this.useAI = !!this.apiKey;
+    if (this.useAI) {
+      this.genAI = new GoogleGenerativeAI(this.apiKey);
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    }
   }
 
   async generateEventDescription(eventData) {
@@ -18,37 +22,20 @@ class AIService {
     try {
       const prompt = this.buildPrompt(eventData);
       
-      const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a professional event planner helping to write engaging event descriptions. Keep descriptions concise (100-200 words), professional, and exciting.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 300,
-          temperature: 0.7
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const fullPrompt = `You are a professional event planner helping to write engaging event descriptions. Keep descriptions concise (100-200 words), professional, and exciting.
+
+${prompt}`;
+
+      const result = await this.model.generateContent(fullPrompt);
+      const response = await result.response;
+      const description = response.text();
 
       return {
         success: true,
-        description: response.data.choices[0].message.content.trim()
+        description: description.trim()
       };
     } catch (error) {
-      console.error('AI generation error:', error.response?.data || error.message);
+      console.error('AI generation error:', error.message);
       return {
         success: false,
         message: 'Failed to generate description',
@@ -77,37 +64,20 @@ Event Details:
 
 Make it more engaging, professional, and appealing to potential attendees. Keep it around 150-200 words.`;
 
-      const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a professional copywriter specializing in event marketing. Improve event descriptions to be more engaging while maintaining accuracy.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 350,
-          temperature: 0.7
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const fullPrompt = `You are a professional copywriter specializing in event marketing. Improve event descriptions to be more engaging while maintaining accuracy.
+
+${prompt}`;
+
+      const result = await this.model.generateContent(fullPrompt);
+      const response = await result.response;
+      const description = response.text();
 
       return {
         success: true,
-        description: response.data.choices[0].message.content.trim()
+        description: description.trim()
       };
     } catch (error) {
-      console.error('AI enhancement error:', error.response?.data || error.message);
+      console.error('AI enhancement error:', error.message);
       return {
         success: false,
         message: 'Failed to enhance description',
