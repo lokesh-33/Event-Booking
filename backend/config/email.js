@@ -1,4 +1,10 @@
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
+
+// Initialize SendGrid if API key is present
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 const shouldPreviewEmails = () => {
   // Only preview (log to console) outside production, or if explicitly forced.
@@ -16,21 +22,34 @@ const getFromAddress = () => {
   );
 };
 
-// Create transporter
-const createTransporter = () => {
-  if (process.env.NODE_ENV === 'production' && process.env.SENDGRID_API_KEY) {
-    // SendGrid configuration
-    return nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'apikey',
-        pass: process.env.SENDGRID_API_KEY
-      }
+// Send email via SendGrid HTTP API (avoids SMTP port blocking on hosting platforms)
+const sendWithSendGrid = async (mailOptions) => {
+  const msg = {
+    to: mailOptions.to,
+    from: mailOptions.from,
+    subject: mailOptions.subject,
+    text: mailOptions.text,
+    html: mailOptions.html
+  };
+
+  try {
+    const response = await sgMail.send(msg);
+    console.log('✅ Email sent via SendGrid HTTP API:', {
+      statusCode: response[0].statusCode,
+      to: mailOptions.to,
+      subject: mailOptions.subject
     });
-  } else if (process.env.NODE_ENV === 'production' && process.env.EMAIL_HOST) {
-    // Other production email service (Gmail, etc.)
+    return { success: true, messageId: response[0].headers['x-message-id'] };
+  } catch (error) {
+    console.error('❌ SendGrid HTTP API error:', error.response?.body || error.message);
+    throw error;
+  }
+};
+
+// Create transporter (fallback for non-SendGrid providers)
+const createTransporter = () => {
+  if (process.env.NODE_ENV === 'production' && process.env.EMAIL_HOST) {
+    // Other production email service (Gmail, etc.) - uses SMTP
     return nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT || 587,
@@ -57,12 +76,10 @@ const createTransporter = () => {
 // Send OTP Email
 const sendOTPEmail = async (to, name, otp, eventTitle) => {
   try {
-    const transporter = createTransporter();
-
     const fromAddress = getFromAddress();
 
     const mailOptions = {
-      from: `"Event Platform" <${fromAddress}>`,
+      from: `Event Platform <${fromAddress}>`,
       to: to,
       subject: `Verify Your Registration - ${eventTitle}`,
       html: `
@@ -137,6 +154,13 @@ const sendOTPEmail = async (to, name, otp, eventTitle) => {
       return { success: true, messageId: 'dev-mode', preview: true };
     }
 
+    // Use SendGrid HTTP API if available (preferred for cloud platforms like Render)
+    if (process.env.SENDGRID_API_KEY) {
+      return await sendWithSendGrid(mailOptions);
+    }
+
+    // Fallback to SMTP for other providers
+    const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
     console.log('OTP Email sent:', info.messageId);
     
@@ -150,12 +174,10 @@ const sendOTPEmail = async (to, name, otp, eventTitle) => {
 // Send Booking Confirmation Email
 const sendBookingConfirmationEmail = async (to, name, eventDetails) => {
   try {
-    const transporter = createTransporter();
-
     const fromAddress = getFromAddress();
 
     const mailOptions = {
-      from: `"Event Platform" <${fromAddress}>`,
+      from: `Event Platform <${fromAddress}>`,
       to: to,
       subject: `Registration Confirmed - ${eventDetails.title}`,
       html: `
@@ -262,6 +284,13 @@ const sendBookingConfirmationEmail = async (to, name, eventDetails) => {
       return { success: true, messageId: 'dev-mode', preview: true };
     }
 
+    // Use SendGrid HTTP API if available (preferred for cloud platforms like Render)
+    if (process.env.SENDGRID_API_KEY) {
+      return await sendWithSendGrid(mailOptions);
+    }
+
+    // Fallback to SMTP for other providers
+    const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
     console.log('Confirmation email sent:', info.messageId);
     

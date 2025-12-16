@@ -17,6 +17,7 @@ const CreateEvent = () => {
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -63,13 +64,93 @@ const CreateEvent = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleAIGenerate = async () => {
+    if (!formData.title || !formData.location || !formData.date) {
+      toast.warning('Please fill in Title, Location, and Date first');
+      return;
+    }
 
+    setAiLoading(true);
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
+      const response = await api.post('/api/ai/generate-description', {
+        title: formData.title,
+        location: formData.location,
+        date: formData.date,
+        time: formData.time,
+        capacity: formData.capacity
+      });
+
+      if (response.data.success) {
+        setFormData({ ...formData, description: response.data.description });
+        toast.success('✨ AI generated description!');
+      } else {
+        toast.info('AI service not available. Please write manually.');
+      }
+    } catch (error) {
+      toast.info('AI service not available. Please write manually.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAIEnhance = async () => {
+    if (!formData.description) {
+      toast.warning('Please write a description first');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await api.post('/api/ai/enhance-description', {
+        description: formData.description,
+        title: formData.title,
+        location: formData.location,
+        date: formData.date
+      });
+
+      if (response.data.success) {
+        setFormData({ ...formData, description: response.data.description });
+        toast.success('✨ AI enhanced description!');
+      } else {
+        toast.info('AI service not available');
+      }
+    } catch (error) {
+      toast.info('AI service not available');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+              Description *
+              <span style={{ float: 'right', fontSize: '0.875rem' }}>
+                <button
+                  type="button"
+                  onClick={handleAIGenerate}
+                  disabled={aiLoading || !formData.title}
+                  className="btn-link"
+                  style={{ marginRight: '1rem' }}
+                >
+                  {aiLoading ? '⏳ Generating...' : '✨ AI Generate'}
+                </button>
+                {formData.description && (
+                  <button
+                    type="button"
+                    onClick={handleAIEnhance}
+                    disabled={aiLoading}
+                    className="btn-link"
+                  >
+                    {aiLoading ? '⏳ Enhancing...' : '🚀 AI Enhance'}
+                  </button>
+                )}
+              </span>
+            </label>
+            <textarea
+              name="description"
+              className="form-control"
+              value={formData.description}
+              onChange={handleChange}
+              required
+              maxLength="1000"
+              placeholder="Describe your event... or use AI to generatele);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('date', formData.date);
       formDataToSend.append('time', formData.time);

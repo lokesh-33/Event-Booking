@@ -68,6 +68,27 @@
   flex: 1;
 }
 
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.btn-link:hover:not(:disabled) {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.btn-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .event-form-card {
     padding: 1.5rem;
