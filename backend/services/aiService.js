@@ -6,8 +6,14 @@ class AIService {
     this.apiKey = process.env.GEMINI_API_KEY || '';
     this.useAI = !!this.apiKey;
     if (this.useAI) {
-      this.genAI = new GoogleGenerativeAI(this.apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      try {
+        this.genAI = new GoogleGenerativeAI(this.apiKey);
+        // Use gemini-pro which is more stable
+        this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      } catch (error) {
+        console.error('Failed to initialize Gemini AI:', error.message);
+        this.useAI = false;
+      }
     }
   }
 
@@ -35,7 +41,12 @@ ${prompt}`;
         description: description.trim()
       };
     } catch (error) {
-      console.error('AI generation error:', error.message);
+      console.error('AI generation error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText
+      });
       return {
         success: false,
         message: 'Failed to generate description',
@@ -77,7 +88,12 @@ ${prompt}`;
         description: description.trim()
       };
     } catch (error) {
-      console.error('AI enhancement error:', error.message);
+      console.error('AI enhancement error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText
+      });
       return {
         success: false,
         message: 'Failed to enhance description',
