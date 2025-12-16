@@ -1,0 +1,16 @@
+# Render deployment config
+# This file is optional but helps Render detect the service type
+
+services:
+  - type: web
+    name: event-platform-api
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
