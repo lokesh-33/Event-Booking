@@ -1,12 +1,36 @@
 const nodemailer = require('nodemailer');
 
+const shouldPreviewEmails = () => {
+  // Only preview (log to console) outside production, or if explicitly forced.
+  if (process.env.EMAIL_PREVIEW === 'true') return true;
+  if (process.env.NODE_ENV !== 'production') return true;
+  // In production, preview only if no real provider is configured.
+  return !process.env.SENDGRID_API_KEY && !process.env.EMAIL_HOST;
+};
+
+const getFromAddress = () => {
+  return (
+    process.env.SENDGRID_FROM ||
+    process.env.EMAIL_FROM ||
+    'noreply@eventplatform.com'
+  );
+};
+
 // Create transporter
 const createTransporter = () => {
-  // For development: Use Ethereal (fake SMTP service)
-  // For production: Use Gmail, SendGrid, AWS SES, etc.
-  
-  if (process.env.NODE_ENV === 'production' && process.env.EMAIL_HOST) {
-    // Production email service
+  if (process.env.NODE_ENV === 'production' && process.env.SENDGRID_API_KEY) {
+    // SendGrid configuration
+    return nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: process.env.SENDGRID_API_KEY
+      }
+    });
+  } else if (process.env.NODE_ENV === 'production' && process.env.EMAIL_HOST) {
+    // Other production email service (Gmail, etc.)
     return nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT || 587,
@@ -17,8 +41,7 @@ const createTransporter = () => {
       }
     });
   } else {
-    // Development: Use Gmail with app password or Ethereal
-    // For now, we'll log emails to console in development
+    // Development: Log to console
     return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,
@@ -36,8 +59,10 @@ const sendOTPEmail = async (to, name, otp, eventTitle) => {
   try {
     const transporter = createTransporter();
 
+    const fromAddress = getFromAddress();
+
     const mailOptions = {
-      from: `"Event Platform" <${process.env.EMAIL_FROM || 'noreply@eventplatform.com'}>`,
+      from: `"Event Platform" <${fromAddress}>`,
       to: to,
       subject: `Verify Your Registration - ${eventTitle}`,
       html: `
@@ -101,11 +126,12 @@ const sendOTPEmail = async (to, name, otp, eventTitle) => {
       `
     };
 
-    // In development, log email instead of sending
-    if (process.env.NODE_ENV !== 'production' || !process.env.EMAIL_HOST) {
+    // Preview mode (logs to console instead of sending)
+    if (shouldPreviewEmails()) {
       console.log('\n========== EMAIL PREVIEW ==========');
       console.log(`To: ${to}`);
       console.log(`Subject: ${mailOptions.subject}`);
+      console.log(`From: ${fromAddress}`);
       console.log(`OTP Code: ${otp}`);
       console.log('===================================\n');
       return { success: true, messageId: 'dev-mode', preview: true };
@@ -126,8 +152,10 @@ const sendBookingConfirmationEmail = async (to, name, eventDetails) => {
   try {
     const transporter = createTransporter();
 
+    const fromAddress = getFromAddress();
+
     const mailOptions = {
-      from: `"Event Platform" <${process.env.EMAIL_FROM || 'noreply@eventplatform.com'}>`,
+      from: `"Event Platform" <${fromAddress}>`,
       to: to,
       subject: `Registration Confirmed - ${eventDetails.title}`,
       html: `
@@ -223,11 +251,12 @@ const sendBookingConfirmationEmail = async (to, name, eventDetails) => {
       `
     };
 
-    // In development, log email instead of sending
-    if (process.env.NODE_ENV !== 'production' || !process.env.EMAIL_HOST) {
+    // Preview mode (logs to console instead of sending)
+    if (shouldPreviewEmails()) {
       console.log('\n========== CONFIRMATION EMAIL PREVIEW ==========');
       console.log(`To: ${to}`);
       console.log(`Subject: ${mailOptions.subject}`);
+      console.log(`From: ${fromAddress}`);
       console.log(`Event: ${eventDetails.title}`);
       console.log('================================================\n');
       return { success: true, messageId: 'dev-mode', preview: true };
