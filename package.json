@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install:backend": "cd backend && npm install",
-    "install:frontend": "cd frontend && npm install",
-    "start": "cd backend && npm start",
-    "build": "cd backend && npm install"
+    "postinstall": "cd backend && npm install",
+    "start": "cd backend && npm start"
   }
 }
