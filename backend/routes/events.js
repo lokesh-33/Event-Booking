@@ -15,19 +15,56 @@ const generateOTP = () => {
 };
 
 // @route   GET /api/events
-// @desc    Get all events
+// @desc    Get all events with search and filter support
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const events = await Event.find()
+    const { search, category, dateFrom, dateTo, sortBy } = req.query;
+    
+    // Build query
+    let query = {};
+    
+    // Search by title or description
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Filter by category
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+    
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      query.date = {};
+      if (dateFrom) query.date.$gte = new Date(dateFrom);
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        query.date.$lte = endDate;
+      }
+    }
+    
+    // Determine sort order
+    let sortOption = { date: 1 }; // default: ascending date
+    if (sortBy === 'date-desc') sortOption = { date: -1 };
+    if (sortBy === 'title') sortOption = { title: 1 };
+    if (sortBy === 'capacity') sortOption = { capacity: -1 };
+    
+    const events = await Event.find(query)
       .populate('creator', 'name email')
       .populate('attendees', 'name email')
-      .sort({ date: 1 });
+      .sort(sortOption);
 
     res.json({
       success: true,
       count: events.length,
-      events
+      events,
+      filters: { search, category, dateFrom, dateTo, sortBy }
     });
   } catch (error) {
     console.error('Get events error:', error);

@@ -38,6 +38,11 @@ const eventSchema = new mongoose.Schema({
     min: [1, 'Capacity must be at least 1'],
     max: [10000, 'Capacity cannot exceed 10000']
   },
+  category: {
+    type: String,
+    enum: ['conference', 'workshop', 'meetup', 'webinar', 'social', 'other'],
+    default: 'other'
+  },
   imageUrl: {
     type: String,
     default: 'https://via.placeholder.com/800x400?text=Event+Image'
@@ -73,5 +78,7 @@ eventSchema.set('toObject', { virtuals: true });
 // Index for efficient queries
 eventSchema.index({ date: 1 });
 eventSchema.index({ creator: 1 });
+eventSchema.index({ title: 'text', description: 'text' });
+eventSchema.index({ category: 1 });
 
 module.exports = mongoose.model('Event', eventSchema);
