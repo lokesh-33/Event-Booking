@@ -8,12 +8,15 @@ class AIService {
     if (this.useAI) {
       try {
         this.genAI = new GoogleGenerativeAI(this.apiKey);
-        // Use gemini-pro which is more stable
-        this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+        // Use gemini-2.5-flash - latest fast model for text generation
+        this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        console.log('✅ Gemini AI initialized successfully');
       } catch (error) {
-        console.error('Failed to initialize Gemini AI:', error.message);
+        console.error('❌ Failed to initialize Gemini AI:', error.message);
         this.useAI = false;
       }
+    } else {
+      console.log('ℹ️  Gemini AI not configured (GEMINI_API_KEY missing)');
     }
   }
 
