@@ -171,8 +171,7 @@
 
   .filter-btn {
     white-space: nowrap;
-    flex: 1
-    font-size: 1.75rem;
+    flex: 1;
   }
 
   .home-filters {
