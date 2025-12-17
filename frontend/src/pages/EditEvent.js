@@ -12,6 +12,7 @@ const EditEvent = () => {
     time: '',
     location: '',
     capacity: '',
+    category: 'other',
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -47,6 +48,7 @@ const EditEvent = () => {
         time: event.time,
         location: event.location,
         capacity: event.capacity,
+        category: event.category || 'other',
       });
       setCurrentImage(event.imageUrl);
     } catch (error) {
@@ -145,6 +147,7 @@ const EditEvent = () => {
       formDataToSend.append('time', formData.time);
       formDataToSend.append('location', formData.location);
       formDataToSend.append('capacity', formData.capacity);
+      formDataToSend.append('category', formData.category);
       
       if (image) {
         formDataToSend.append('image', image);
@@ -278,18 +281,38 @@ const EditEvent = () => {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Capacity *</label>
-            <input
-              type="number"
-              name="capacity"
-              className="form-control"
-              value={formData.capacity}
-              onChange={handleChange}
-              required
-              min="1"
-              max="10000"
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Capacity *</label>
+              <input
+                type="number"
+                name="capacity"
+                className="form-control"
+                value={formData.capacity}
+                onChange={handleChange}
+                required
+                min="1"
+                max="10000"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Category *</label>
+              <select
+                name="category"
+                className="form-control"
+                value={formData.category}
+                onChange={handleChange}
+                required
+              >
+                <option value="conference">Conference</option>
+                <option value="workshop">Workshop</option>
+                <option value="meetup">Meetup</option>
+                <option value="webinar">Webinar</option>
+                <option value="social">Social</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div className="form-group">

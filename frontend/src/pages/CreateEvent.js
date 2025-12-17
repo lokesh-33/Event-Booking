@@ -13,6 +13,7 @@ const CreateEvent = () => {
     time: '',
     location: '',
     capacity: '',
+    category: 'other',
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -99,6 +100,11 @@ const CreateEvent = () => {
       return;
     }
 
+    if (!formData.title || !formData.location || !formData.date) {
+      toast.warning('Please fill in Title, Location, and Date first');
+      return;
+    }
+
     setAiLoading(true);
     try {
       const response = await api.post('/api/ai/enhance-description', {
@@ -133,6 +139,7 @@ const CreateEvent = () => {
       formDataToSend.append('time', formData.time);
       formDataToSend.append('location', formData.location);
       formDataToSend.append('capacity', formData.capacity);
+      formDataToSend.append('category', formData.category);
       
       if (image) {
         formDataToSend.append('image', image);
@@ -252,19 +259,39 @@ const CreateEvent = () => {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Capacity *</label>
-            <input
-              type="number"
-              name="capacity"
-              className="form-control"
-              value={formData.capacity}
-              onChange={handleChange}
-              required
-              min="1"
-              max="10000"
-              placeholder="Maximum number of attendees"
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Capacity *</label>
+              <input
+                type="number"
+                name="capacity"
+                className="form-control"
+                value={formData.capacity}
+                onChange={handleChange}
+                required
+                min="1"
+                max="10000"
+                placeholder="Maximum number of attendees"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Category *</label>
+              <select
+                name="category"
+                className="form-control"
+                value={formData.category}
+                onChange={handleChange}
+                required
+              >
+                <option value="conference">Conference</option>
+                <option value="workshop">Workshop</option>
+                <option value="meetup">Meetup</option>
+                <option value="webinar">Webinar</option>
+                <option value="social">Social</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div className="form-group">

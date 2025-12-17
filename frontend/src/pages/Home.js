@@ -9,6 +9,8 @@ const Home = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, upcoming, today
+  const [searchTerm, setSearchTerm] = useState('');
+  const [category, setCategory] = useState('all');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -55,8 +57,25 @@ const Home = () => {
       // Skip null or undefined events
       if (!event || !event.date) return false;
       
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch = 
+          event.title?.toLowerCase().includes(searchLower) ||
+          event.description?.toLowerCase().includes(searchLower) ||
+          event.location?.toLowerCase().includes(searchLower);
+        
+        if (!matchesSearch) return false;
+      }
+      
+      // Category filter
+      if (category !== 'all' && event.category !== category) {
+        return false;
+      }
+      
       const eventDate = new Date(event.date);
       
+      // Date filter
       if (filter === 'today') {
         const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
         return eventDay.getTime() === today.getTime();
@@ -88,26 +107,68 @@ const Home = () => {
           </p>
         </div>
 
-        <div className="home-filters">
-          <button
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All Events
-          </button>
-          <button
-            className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}
-            onClick={() => setFilter('upcoming')}
-          >
-            Upcoming
-          </button>
-          <button
-            className={`filter-btn ${filter === 'today' ? 'active' : ''}`}
-            onClick={() => setFilter('today')}
-          >
-            Today
-          </button>
+        {/* Search Bar */}
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="🔍 Search events by title, description, or location..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
+
+        {/* Filters */}
+        <div className="filters-row">
+          <div className="filter-group">
+            <label className="filter-label">Category:</label>
+            <select
+              className="filter-select"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              <option value="conference">Conference</option>
+              <option value="workshop">Workshop</option>
+              <option value="meetup">Meetup</option>
+              <option value="webinar">Webinar</option>
+              <option value="social">Social</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Date:</label>
+            <div className="home-filters">
+              <button
+                className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                onClick={() => setFilter('all')}
+              >
+                All Events
+              </button>
+              <button
+                className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}
+                onClick={() => setFilter('upcoming')}
+              >
+                Upcoming
+              </button>
+              <button
+                className={`filter-btn ${filter === 'today' ? 'active' : ''}`}
+                onClick={() => setFilter('today')}
+              >
+                Today
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results count */}
+        {(searchTerm || category !== 'all' || filter !== 'all') && (
+          <div className="results-info">
+            Found {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
+            {searchTerm && ` matching "${searchTerm}"`}
+          </div>
+        )}
       </div>
 
       {filteredEvents.length === 0 ? (

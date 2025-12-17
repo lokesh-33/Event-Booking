@@ -33,7 +33,14 @@ const EventCard = ({ event, onRSVP, onCancelRSVP, currentUserId, showActions = t
       </div>
 
       <div className="event-card-content">
-        <h3 className="event-card-title">{event.title}</h3>
+        <div className="event-card-header">
+          <h3 className="event-card-title">{event.title}</h3>
+          {event.category && (
+            <span className={`category-badge category-${event.category}`}>
+              {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
+            </span>
+          )}
+        </div>
         
         <div className="event-card-info">
           <div className="event-info-item">
